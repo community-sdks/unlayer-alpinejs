@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>unlayer-alpinejs basic example</title>
+    <script type="importmap">
+        {
+            "imports": {
+                "alpinejs": "../node_modules/alpinejs/dist/module.esm.js",
+                "@community-sdks/unlayer-ts": "../node_modules/@community-sdks/unlayer-ts/dist/index.js",
+                "@community-sdks/unlayer-alpinejs": "../dist/index.js"
+            }
+        }
+    </script>
+    <style>
+        :root {
+            color-scheme: light;
+            font-family: "Segoe UI", sans-serif;
+            background: #f3f4f6;
+            color: #111827;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #f9fafb 0%, #e5eefc 100%);
+        }
+
+        main {
+            width: min(1200px, calc(100% - 32px));
+            margin: 24px auto;
+            display: grid;
+            gap: 16px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid #d1d5db;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+        }
+
+        .hero,
+        .output {
+            padding: 24px;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 32px;
+            line-height: 1.1;
+        }
+
+        p {
+            margin: 0;
+            color: #4b5563;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 0 24px 24px;
+        }
+
+        button {
+            appearance: none;
+            border: 0;
+            border-radius: 999px;
+            padding: 12px 18px;
+            background: #111827;
+            color: #ffffff;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        button.secondary {
+            background: #2563eb;
+        }
+
+        #editor {
+            height: 720px;
+        }
+
+        pre {
+            margin: 0;
+            min-height: 200px;
+            max-height: 320px;
+            overflow: auto;
+            border-radius: 12px;
+            background: #0f172a;
+            color: #e5eefc;
+            padding: 16px;
+            font: 13px/1.5 "Cascadia Code", monospace;
+        }
+    </style>
+</head>
+<body>
+    <main x-data="unlayerEditor(window.unlayerBasicOptions)">
+        <section class="card">
+            <div class="hero">
+                <h1>unlayer-alpinejs basic example</h1>
+                <p>This page registers the Alpine adapter, mounts the editor automatically, and lets you export the current state.</p>
+            </div>
+            <div class="controls">
+                <button type="button" x-on:click="loadDesign(window.sampleDesign)">Load sample design</button>
+                <button class="secondary" type="button" x-on:click="exportState().then((state) => window.writeState(state))">Export current state</button>
+            </div>
+        </section>
+
+        <section class="card">
+            <div id="editor"></div>
+        </section>
+
+        <section class="card output">
+            <pre id="result">Waiting for editor...</pre>
+        </section>
+    </main>
+
+    <script type="module">
+        import Alpine from 'alpinejs';
+        import { registerUnlayerAlpine } from '@community-sdks/unlayer-alpinejs';
+
+        const result = document.getElementById('result');
+
+        window.writeState = (value) => {
+            result.textContent = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+        };
+
+        window.sampleDesign = {
+            counters: {
+                u_column: 1,
+                u_row: 1,
+                u_content_heading: 1,
+                u_content_text: 1,
+                u_content_button: 1,
+            },
+            body: {
+                id: 'body',
+                rows: [
+                    {
+                        id: 'row-1',
+                        cells: [1],
+                        columns: [
+                            {
+                                id: 'column-1',
+                                contents: [
+                                    {
+                                        id: 'heading-1',
+                                        type: 'heading',
+                                        values: {
+                                            text: '<h1 style="text-align:center;">Build campaigns faster</h1>',
+                                        },
+                                    },
+                                    {
+                                        id: 'text-1',
+                                        type: 'text',
+                                        values: {
+                                            text: '<p style="text-align:center;">This Alpine example uses the local adapter package.</p>',
+                                        },
+                                    },
+                                    {
+                                        id: 'button-1',
+                                        type: 'button',
+                                        values: {
+                                            text: 'Open dashboard',
+                                            href: 'https://example.com',
+                                            align: 'center',
+                                        },
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+                values: {
+                    backgroundColor: '#f8fafc',
+                    contentWidth: '640px',
+                    fontFamily: {
+                        label: 'Arial',
+                        value: 'arial,helvetica,sans-serif',
+                    },
+                },
+            },
+            schemaVersion: 16,
+        };
+
+        window.unlayerBasicOptions = {
+            id: 'editor',
+            displayMode: 'email',
+            state: {
+                html: '',
+                design: window.sampleDesign,
+            },
+            templatePicker: {
+                enabled: false,
+            },
+            onReady: () => {
+                window.writeState('Editor ready. Click "Export current state" to inspect the generated output.');
+            },
+            onChange: (state) => {
+                window.writeState(state);
+            },
+            onError: (error) => {
+                const message = error instanceof Error ? error.message : String(error);
+                window.writeState(`Error: ${message}`);
+                console.error(error);
+            },
+        };
+
+        registerUnlayerAlpine(Alpine);
+
+        window.Alpine = Alpine;
+        Alpine.start();
+    </script>
+</body>
+</html>

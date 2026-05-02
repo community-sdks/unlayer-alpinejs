@@ -2,6 +2,29 @@
 
 Alpine.js adapter for [`@community-sdks/unlayer-ts`](https://www.npmjs.com/package/@community-sdks/unlayer-ts).
 
+## Development
+
+Build the package:
+
+```bash
+npm run build
+```
+
+Serve the local examples:
+
+```bash
+npm run examples:serve
+```
+
+Then open one of these pages in the browser:
+
+```txt
+http://127.0.0.1:4174/examples/basic.html
+http://127.0.0.1:4174/examples/http-template-client.html
+```
+
+Do not open the example files with `file://`. Browser module imports from the local filesystem are blocked and the examples are designed to run over HTTP.
+
 ## Getting Started
 
 ```bash
@@ -24,6 +47,12 @@ You can also choose a custom component name:
 ```ts
 registerUnlayerAlpine(Alpine, 'unlayerEditor')
 ```
+
+## Examples
+
+`examples/basic.html` registers the Alpine adapter, mounts the editor with a sample design, and exports the current state.
+
+`examples/http-template-client.html` shows how to combine the Alpine adapter with `HttpTemplateClient` and backend template proxy routes.
 
 ## Usage
 
@@ -54,26 +83,6 @@ registerUnlayerAlpine(Alpine, 'unlayerEditor')
 
     <button type="button" x-on:click="exportState()">Export</button>
     <button type="button" x-on:click="openTemplates()">Choose template</button>
-
-    <div x-show="templatesOpen">
-        <input
-            type="search"
-            x-model="templateSearch"
-            x-on:input.debounce.350ms="setTemplateSearch(templateSearch)"
-            placeholder="Search templates"
-        />
-
-        <template x-if="templatesLoading">
-            <p>Loading templates...</p>
-        </template>
-
-        <template x-for="template in templates" x-bind:key="template.slug">
-            <button type="button" x-on:click="chooseTemplate(template)">
-                <img x-bind:src="template.thumbnail" x-bind:alt="template.name" width="160" />
-                <span x-text="template.name"></span>
-            </button>
-        </template>
-    </div>
 </div>
 ```
 
@@ -106,6 +115,8 @@ openTemplates()
 closeTemplates()
 setTemplateSearch(search)
 ```
+
+When `templatePicker.enabled` is on, `openTemplates()` and `closeTemplates()` delegate to the built-in picker UI from `@community-sdks/unlayer-ts`.
 
 ## Stock Templates
 

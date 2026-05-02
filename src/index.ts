@@ -1,6 +1,5 @@
 import UnlayerEditor, {
     type StockTemplate,
-    type TemplateClient,
     type TemplatePickerOptions,
     type TemplateSearchOptions,
     type UnlayerDesign,
@@ -53,6 +52,7 @@ export type UnlayerAlpineComponent = {
 
 export function createUnlayerAlpineComponent(options: UnlayerAlpineOptions): UnlayerAlpineComponent {
     const autoMount = options.autoMount ?? true;
+    const usesBuiltInTemplatePicker = options.templatePicker?.enabled ?? Boolean(options.templateSearch);
 
     return {
         editor: null,
@@ -144,6 +144,11 @@ export function createUnlayerAlpineComponent(options: UnlayerAlpineOptions): Unl
         async searchTemplates(searchOptions: TemplateSearchOptions = {}): Promise<StockTemplate[]> {
             const editor = await this.mount();
 
+            if (searchOptions.search !== undefined) {
+                this.templateSearch = searchOptions.search;
+                this.templateSearchOptions.search = searchOptions.search;
+            }
+
             this.templatesLoading = true;
 
             try {
@@ -185,7 +190,15 @@ export function createUnlayerAlpineComponent(options: UnlayerAlpineOptions): Unl
         },
 
         async openTemplates(): Promise<void> {
+            const editor = await this.mount();
+
             this.templatesOpen = true;
+
+            if (usesBuiltInTemplatePicker) {
+                await editor.openTemplatePicker();
+
+                return;
+            }
 
             if (this.templates.length === 0) {
                 await this.refreshTemplates();
@@ -194,10 +207,12 @@ export function createUnlayerAlpineComponent(options: UnlayerAlpineOptions): Unl
 
         closeTemplates(): void {
             this.templatesOpen = false;
+            this.editor?.closeTemplatePicker();
         },
 
         async setTemplateSearch(search: string): Promise<StockTemplate[]> {
             this.templateSearch = search;
+            this.templateSearchOptions.search = search;
 
             return this.searchTemplates({ search });
         },

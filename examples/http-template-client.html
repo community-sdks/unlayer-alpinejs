@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>unlayer-alpinejs HttpTemplateClient example</title>
+    <script type="importmap">
+        {
+            "imports": {
+                "alpinejs": "../node_modules/alpinejs/dist/module.esm.js",
+                "@community-sdks/unlayer-ts": "../node_modules/@community-sdks/unlayer-ts/dist/index.js",
+                "@community-sdks/unlayer-alpinejs": "../dist/index.js"
+            }
+        }
+    </script>
+    <style>
+        :root {
+            color-scheme: light;
+            font-family: "Segoe UI", sans-serif;
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at top right, rgba(14, 165, 233, 0.14), transparent 28%),
+                linear-gradient(180deg, #f8fafc 0%, #dbeafe 100%);
+        }
+
+        main {
+            width: min(1320px, calc(100% - 32px));
+            margin: 24px auto;
+            display: grid;
+            grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+            gap: 16px;
+        }
+
+        .panel,
+        .editor-shell {
+            background: rgba(255, 255, 255, 0.94);
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            border-radius: 20px;
+            box-shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+        }
+
+        .panel {
+            padding: 24px;
+            display: grid;
+            gap: 18px;
+            align-content: start;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 30px;
+            line-height: 1.05;
+        }
+
+        p {
+            margin: 0;
+            color: #475569;
+            line-height: 1.5;
+        }
+
+        .stack {
+            display: grid;
+            gap: 12px;
+        }
+
+        label {
+            display: grid;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            min-height: 44px;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 0 14px;
+            background: #fff;
+            color: #0f172a;
+            font: inherit;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        button {
+            appearance: none;
+            border: 0;
+            border-radius: 999px;
+            padding: 12px 18px;
+            background: #0f172a;
+            color: #fff;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        button.secondary {
+            background: #0284c7;
+        }
+
+        .editor-shell {
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr) auto;
+            min-height: 860px;
+        }
+
+        .editor-stage {
+            min-height: 660px;
+            height: 100%;
+        }
+
+        .banner {
+            padding: 18px 22px;
+            border-bottom: 1px solid #e2e8f0;
+            background: linear-gradient(90deg, #0f172a 0%, #1d4ed8 100%);
+            color: #eff6ff;
+        }
+
+        #editor {
+            min-height: 660px;
+            height: 100%;
+        }
+
+        pre {
+            margin: 0;
+            max-height: 220px;
+            overflow: auto;
+            padding: 18px 22px;
+            border-top: 1px solid #e2e8f0;
+            background: #0f172a;
+            color: #dbeafe;
+            font: 13px/1.5 "Cascadia Code", monospace;
+        }
+
+        .hint {
+            padding: 14px 16px;
+            border-radius: 14px;
+            background: #e0f2fe;
+            color: #0c4a6e;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        @media (max-width: 980px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+
+            .editor-shell {
+                min-height: 720px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main x-data="httpExample()">
+        <section class="panel">
+            <div class="stack">
+                <h1>HttpTemplateClient example</h1>
+                <p>This page registers the Alpine adapter and configures the built-in template picker against backend proxy routes.</p>
+            </div>
+
+            <div class="hint">
+                Expected backend contract: a JSON <strong>GET</strong> endpoint that returns <strong>{"data": StockTemplate[]}</strong> and a second endpoint that returns <strong>{"data": {"design": {...}}}</strong>.
+            </div>
+
+            <div class="stack">
+                <label>
+                    Search URL
+                    <input x-model="searchUrl" type="url" value="https://your-backend-app/templates">
+                </label>
+                <label>
+                    Load URL
+                    <input x-model="loadUrl" type="url" value="https://your-backend-app/templates/:slug">
+                </label>
+                <label>
+                    Initial search
+                    <input x-model="initialSearch" type="text" value="newsletter">
+                </label>
+            </div>
+
+            <div class="actions">
+                <button type="button" x-on:click="mountEditor()">Mount editor</button>
+                <button class="secondary" type="button" x-on:click="openTemplates()">Open templates</button>
+                <button class="secondary" type="button" x-on:click="exportState()">Export state</button>
+            </div>
+        </section>
+
+        <section class="editor-shell">
+            <div class="banner">The editor instance is created on demand so you can adjust endpoints before mount.</div>
+            <div class="editor-stage" x-data="editorComponent" x-ref="editorHost">
+                <div id="editor"></div>
+            </div>
+            <pre id="result">Waiting for configuration...</pre>
+        </section>
+    </main>
+
+    <script type="module">
+        import Alpine from 'alpinejs';
+        import { HttpTemplateClient } from '@community-sdks/unlayer-ts';
+        import { createUnlayerAlpineComponent, registerUnlayerAlpine } from '@community-sdks/unlayer-alpinejs';
+
+        const result = document.getElementById('result');
+
+        const writeResult = (value) => {
+            result.textContent = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+        };
+
+        Alpine.data('httpExample', () => {
+            const config = {
+                searchUrl: 'https://your-backend-app/templates',
+                loadUrl: 'https://your-backend-app/templates/:slug',
+                initialSearch: 'newsletter',
+            };
+
+            const createTemplateClient = () => new HttpTemplateClient({
+                searchUrl: config.searchUrl,
+                loadUrl: config.loadUrl,
+            });
+
+            const editorComponent = createUnlayerAlpineComponent({
+                id: 'editor',
+                autoMount: false,
+                displayMode: 'email',
+                templateClient: {
+                    search: (options) => createTemplateClient().search(options),
+                    load: (slug) => createTemplateClient().load(slug),
+                },
+                templateSearch: {
+                    search: config.initialSearch,
+                    limit: 12,
+                    sort: 'recent',
+                },
+                templatePicker: {
+                    enabled: true,
+                    showTrigger: true,
+                    label: 'Backend template browser',
+                    triggerLabel: 'Browse templates',
+                    title: 'Templates from your backend',
+                    placeholder: 'Search templates',
+                    emptyText: 'No templates returned from the backend.',
+                },
+                onReady: () => {
+                    writeResult('Editor ready. Use the built-in template picker to search your backend templates.');
+                },
+                onChange: (state) => {
+                    writeResult(state);
+                },
+                onError: (error) => {
+                    const message = error instanceof Error ? error.message : String(error);
+                    writeResult(`Error: ${message}`);
+                    console.error(error);
+                },
+            });
+
+            return {
+                searchUrl: config.searchUrl,
+                loadUrl: config.loadUrl,
+                initialSearch: config.initialSearch,
+                editorComponent,
+
+                syncOptions() {
+                    config.searchUrl = this.searchUrl;
+                    config.loadUrl = this.loadUrl;
+                    config.initialSearch = this.initialSearch;
+                    this.editorComponent.templateSearch = this.initialSearch;
+                    this.editorComponent.templateSearchOptions.search = this.initialSearch;
+                },
+
+                async mountEditor() {
+                    this.syncOptions();
+                    this.editorComponent.error = null;
+
+                    await this.editorComponent.mount();
+                },
+
+                async openTemplates() {
+                    await this.mountEditor();
+                    await this.editorComponent.openTemplates();
+                },
+
+                async exportState() {
+                    await this.mountEditor();
+                    const state = await this.editorComponent.exportState();
+                    writeResult(state);
+                },
+            };
+        });
+
+        registerUnlayerAlpine(Alpine);
+
+        window.Alpine = Alpine;
+        Alpine.start();
+    </script>
+</body>
+</html>
