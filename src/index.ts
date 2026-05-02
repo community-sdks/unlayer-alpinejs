@@ -1,6 +1,7 @@
 import UnlayerEditor, {
     type StockTemplate,
     type TemplateClient,
+    type TemplatePickerOptions,
     type TemplateSearchOptions,
     type UnlayerDesign,
     type UnlayerEditorOptions,
@@ -15,6 +16,7 @@ export type AlpineLike = {
 export type UnlayerAlpineOptions = Omit<UnlayerEditorOptions, 'onReady' | 'onChange' | 'onError'> & {
     autoMount?: boolean;
     templateSearch?: TemplateSearchOptions;
+    templatePicker?: TemplatePickerOptions;
     onReady?: (editor: UnlayerEditor, component: UnlayerAlpineComponent) => void;
     onChange?: (state: UnlayerState, component: UnlayerAlpineComponent) => void;
     onError?: (error: unknown, component: UnlayerAlpineComponent) => void;

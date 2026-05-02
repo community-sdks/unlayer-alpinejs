@@ -1,6 +1,6 @@
 {
     "name": "@community-sdks/unlayer-alpinejs",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Alpine.js adapter for the unofficial Unlayer TypeScript SDK.",
     "type": "module",
     "main": "dist/index.cjs",
@@ -14,7 +14,7 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
-        "@community-sdks/unlayer-ts": "^0.1.0"
+        "@community-sdks/unlayer-ts": "^0.1.1"
     },
     "peerDependencies": {
         "alpinejs": "^3.14.0"
